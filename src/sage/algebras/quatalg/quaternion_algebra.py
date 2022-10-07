@@ -1090,7 +1090,7 @@ class QuaternionAlgebra_ab(QuaternionAlgebra_abstract):
 
     def quaternion_order(self, basis, check=True):
         """
-        Return the order of this quaternion order with given basis.
+        Return the order of this quaternion algebra with given basis.
 
         INPUT:
 
