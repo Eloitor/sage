@@ -72,6 +72,7 @@ from sage.modular.modsym.p1list import P1List
 from sage.misc.cachefunc import cached_method
 
 from sage.categories.algebras import Algebras
+from sage.categories.number_fields import NumberFields
 
 ########################################################
 # Constructor
@@ -1399,27 +1400,21 @@ class QuaternionOrder(Parent):
                 if M1 != M2:
                     raise ValueError("given lattice must be a ring")
 
-            if A.base_ring() != QQ:     # slow code over number fields (should eventually use PARI's nfhnf)
-                O = None
-                try:
-                    O = A.base_ring().maximal_order()
-                except AttributeError:
-                    pass
+            elif A.base_ring() in NumberFields():     # slow code over number fields (should eventually use PARI's nfhnf)
+                O = A.base_ring().maximal_order()
+                M = matrix(A.base_ring(), 4, 4, [x.coefficient_tuple()
+                                                for x in basis])
+                v = M.solve_left(V([1, 0, 0, 0]))
 
-                if O:
-                    M = matrix(A.base_ring(), 4, 4, [x.coefficient_tuple()
-                                                     for x in basis])
-                    v = M.solve_left(V([1, 0, 0, 0]))
+                if any(a not in O for a in v):
+                    raise ValueError("lattice must contain 1")
 
-                    if any(a not in O for a in v):
-                        raise ValueError("lattice must contain 1")
-
-                    # check if multiplicatively closed
-                    Y = matrix(QQ, 16, 4, [(x*y).coefficient_tuple()
-                                           for x in basis for y in basis])
-                    X = M.solve_left(Y)
-                    if any(a not in O for x in X for a in x):
-                        raise ValueError("given lattice must be a ring")
+                # check if multiplicatively closed
+                Y = matrix(A.base_ring(), 16, 4, [(x*y).coefficient_tuple()
+                                        for x in basis for y in basis])
+                X = M.solve_left(Y)
+                if any(a not in O for x in X for a in x):
+                    raise ValueError("given lattice must be a ring")
 
         self.__basis = tuple(basis)
         self.__quaternion_algebra = A
